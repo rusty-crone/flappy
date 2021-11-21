@@ -7,7 +7,9 @@ const FRAME_DURATION : f32 = 75.0;
 struct State {
     frame_time: f32,
     mode: GameMode,
+    obstacle: Obstacle,
     player: Player,
+    score: i32,
 }
 
 impl State {
@@ -15,7 +17,9 @@ impl State {
         State {
             frame_time: 0.0,
             mode: GameMode::Menu,
+            obstacle: Obstacle::new(SCREEN_WIDTH, 0),
             player: Player::new(5, 25),
+            score: 0,
         }
     }
 
@@ -46,6 +50,13 @@ impl State {
         }
         self.player.render(ctx);
         ctx.print(0, 0, "Press SPACE to flap.");
+        ctx.print(0, 1, &format!("Score: {}", self.score));
+
+        self.obstacle.render(ctx, self.player.x);
+        if self.player.x > self.obstacle.x {
+            self.score += 1;
+            self.obstacle = Obstacle::new(self.player.x + SCREEN_WIDTH, self.score);
+        }
         if self.player.y > SCREEN_HEIGHT {
             self.mode = GameMode::End;
         }
@@ -54,12 +65,15 @@ impl State {
     fn restart(&mut self) {
         self.frame_time = 0.0;
         self.mode = GameMode::Playing;
+        self.obstacle = Obstacle::new(SCREEN_WIDTH, 0);
         self.player = Player::new(5, 25);
+        self.score = 0;
     }
 
     fn dead(&mut self, ctx: &mut BTerm) {
         ctx.cls();
         ctx.print_centered(5, "You are dead!");
+        ctx.print_centered(6, &format!("You earned {} points", self.score));
         ctx.print_centered(8, "(P) Play");
         ctx.print_centered(9, "(Q) Quit");
 
